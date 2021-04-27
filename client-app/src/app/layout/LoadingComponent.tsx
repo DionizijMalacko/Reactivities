@@ -3,7 +3,7 @@ import { Dimmer, Loader } from 'semantic-ui-react';
 
 interface Props {
     inverted?: boolean;
-    content: string;
+    content?: string;
 }
 
 //drugi nacin za definisanje props, {sva polja u Props}: Props (tipa Props)

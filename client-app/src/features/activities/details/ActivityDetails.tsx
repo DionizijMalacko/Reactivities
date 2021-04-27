@@ -1,32 +1,35 @@
 import React from 'react';
 import { Button, Card, Image } from 'semantic-ui-react';
-import { Activity } from '../../../app/models/activity';
-
-interface Props {
-    activity: Activity;
-    cancelSelectActivity: () => void;
-    openForm: (id: string) => void;
-
-}
+import LoadingComponent from '../../../app/layout/LoadingComponent';
+import { useStore } from '../../../app/stores/store';
 
 
-export default function ActivityDetails(props: Props) {
+export default function ActivityDetails() {
+
+    const {activityStore} = useStore();
+
+    //ovo navodimo samo da ne bismo morali pisati activityStore.openForm nego samo openForm sa parametrima...
+    const {selectedActivity, openForm, cancelSelectedActivity} = activityStore;
+
+    //typescript je skontao da selectedActivity moze biti i undefined pa pravi problem
+    if (!selectedActivity) return <LoadingComponent/>; //ova linija je samo da bi se izbegli errori
+
     return (
         <Card fluid>
-            <Image src={`/assets/categoryImages/${props.activity.category}.jpg`} />
+            <Image src={`/assets/categoryImages/${selectedActivity.category}.jpg`} />
             <Card.Content>
-                <Card.Header>{props.activity.title}</Card.Header>
+                <Card.Header>{selectedActivity.title}</Card.Header>
                 <Card.Meta>
-                    <span>{props.activity.date}</span>
+                    <span>{selectedActivity.date}</span>
                 </Card.Meta>
                 <Card.Description>
-                    {props.activity.description}
+                    {selectedActivity.description}
                 </Card.Description>
                 </Card.Content>
             <Card.Content extra>
                 <Button.Group widths='2'>
-                    <Button onClick={() => props.openForm(props.activity.id)} basic color='blue' content='Edit'/>
-                    <Button onClick={props.cancelSelectActivity} basic color='grey' content='Cancel'/>
+                    <Button onClick={() => openForm(selectedActivity.id)} basic color='blue' content='Edit'/>
+                    <Button onClick={cancelSelectedActivity} basic color='grey' content='Cancel'/>
                 </Button.Group>
             </Card.Content>
         </Card>

@@ -1,19 +1,18 @@
+import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { ChangeEvent } from 'react';
 import { Button, Form, Segment } from 'semantic-ui-react';
-import { Activity } from '../../../app/models/activity';
+import { useStore } from '../../../app/stores/store';
 
-interface Props {
-    activity: Activity | undefined;
-    closeForm: () => void;
-    createOrEdit: (activity: Activity) => void;
-    submitting: boolean;
-}
 
-export default function ActivityForm(props: Props) {
+export default observer(function ActivityForm() {
+
+    const {activityStore} = useStore();
+
+    const {selectedActivity, closeForm, createActivity, updateActivity, loading} = activityStore;
 
     //ako je activiti null onda ce biti sve sto se nalazi na desnoj strani ??
-    const initialState = props.activity ?? {
+    const initialState = selectedActivity ?? {
         id: '',
         title: '',
         category: '',
@@ -26,7 +25,7 @@ export default function ActivityForm(props: Props) {
     const [activity, setActivity] = useState(initialState);
 
     function handleSubmit() {
-        props.createOrEdit(activity);
+        activity.id ? updateActivity(activity) : createActivity(activity);
     }
 
     //ova funkcija nam sluzi da bi react znao da mi kucamo nesto u formi, posto bez nje mozemo da kucamo ali nista se nece prikazati
@@ -47,9 +46,9 @@ export default function ActivityForm(props: Props) {
                 <Form.Input type='date' placeholder='Date' value={activity.date} name='date' onChange={handleInputChange}/>
                 <Form.Input placeholder='City' value={activity.city} name='city' onChange={handleInputChange}/>
                 <Form.Input placeholder='Venue' value={activity.venue} name='venue' onChange={handleInputChange}/>
-                <Button loading={props.submitting} floated='right' postive type='submit' content='Submit' color='green'/>
-                <Button  onClick={props.closeForm} floated='right' type='button' content='Cancel'/>
+                <Button loading={loading} floated='right' postive type='submit' content='Submit' color='green'/>
+                <Button  onClick={closeForm} floated='right' type='button' content='Cancel'/>
             </Form>
         </Segment>
     )
-}
+})
