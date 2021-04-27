@@ -6,6 +6,8 @@ import NavBar from './NavBar';
 import { Fragment } from 'react';
 import ActivityDashboard from '../../features/activities/dashboard/ActivityDashboard';
 import {v4 as uuid} from 'uuid';
+import agent from '../api/agent';
+import LoadingComponent from './LoadingComponent';
 
 
 //ovo vracamo kada pozovemo App
@@ -19,13 +21,23 @@ function App() {
 
   const [editMode, setEditMode] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
+  const [submitting, setSubmitting] = useState(false);
+
 
 
   //poziva get metodu i stavlja response u nas state
   useEffect(() => { //kod get metode sada mozemo da specificiramo koji tip podataka ce dobaviti
-    axios.get<Activity[]>('http://localhost:5000/api/activities').then(response => {
+    agent.Activities.list().then(response => {
+      let activities: Activity[] = []; //delimo datum na vise polja, uzimamo prvi deo koji je samo datum
+      response.forEach(activity => {
+        activity.date = activity.date.split('T')[0];
+        activities.push(activity);
+      })
       console.log(response);
-      setActivities(response.data);
+      setActivities(activities);
+      setLoading(false);
     });
   }, []);
 
@@ -51,19 +63,37 @@ function App() {
   //filter ostavlja sve koji zadovoljavaju uslov
   //prosledjujemo activity, ako vec postoji izbaci je i postavi novi objekat u listu(izmenjen)
   function handleCreateOrEditActivity(activity: Activity) {
-    activity.id 
-    ? setActivities([...activities.filter(x => x.id !== activity.id), activity]) 
-    : setActivities([...activities, {...activity, id: uuid()}]);
-    //ako ga nema znaci da kreiramo novi objekat
+    setSubmitting(true);
 
-    setEditMode(false);
-    //da nam otvori informacije o activity koji smo editovali ili kreirali
-    setSelectedActivity(activity);
+    //ako postoji updejtuj
+    if (activity.id) {
+      agent.Activities.update(activity).then(() => {
+        setActivities([...activities.filter(x => x.id !== activity.id), activity])
+        setSelectedActivity(activity);
+        setEditMode(false);
+        setSubmitting(false);
+      })
+    } else {
+      //ako ne, onda kreiraj novu
+      activity.id = uuid();
+      agent.Activities.create(activity).then(() => {
+        setActivities([...activities, activity])
+        setSelectedActivity(activity);
+        setEditMode(false);
+        setSubmitting(false);
+      })
+    }
   }
 
   function handleDeleteActivity(id: string) {
-    setActivities([...activities.filter(x => x.id !== id)]);
+    setSubmitting(true);
+    agent.Activities.delete(id).then(() => {
+      setActivities([...activities.filter(x => x.id !== id)]);
+      setSubmitting(false);
+    })
   }
+
+  if (loading) return <LoadingComponent content='Loading app...'/>
 
   return (
     <Fragment>
@@ -78,7 +108,8 @@ function App() {
           openForm={handleFormOpen}
           closeForm={handleFormClose}
           createOrEdit={handleCreateOrEditActivity}
-          deleteActivity={handleDeleteActivity}/>
+          deleteActivity={handleDeleteActivity}
+          submitting={submitting}/>
       </Container>
     </Fragment>
   );

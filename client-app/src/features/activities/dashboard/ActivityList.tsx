@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { SyntheticEvent, useEffect, useState } from 'react';
 import { Button, Item, Label, Segment } from 'semantic-ui-react';
 import { Activity } from '../../../app/models/activity';
 
@@ -6,9 +6,19 @@ interface Props {
     activities: Activity[];
     selectActivity: (id: string) => void;
     deleteActivity: (id: string) => void;
+    submitting: boolean;
 }
 
 export default function ActivityList(props: Props) {
+
+    const [target, setTarget] = useState('');
+
+    //moramo da hendlujemo inace ce prikazati loading kod svih akcivnosti, a nama treba samo kod ove sto je zapravo brisemo
+    function handleActivityDelete(e: SyntheticEvent<HTMLButtonElement>, id: string) {
+        setTarget(e.currentTarget.name);
+        props.deleteActivity(id);
+    }
+
     return (
         <Segment>
             <Item.Group divided>
@@ -25,7 +35,13 @@ export default function ActivityList(props: Props) {
                             </Item.Description>
                             <Item.Extra>
                                 <Button onClick={() => props.selectActivity(activity.id)} floated='right' content='View' color='blue' />
-                                <Button onClick={() => props.deleteActivity(activity.id)} floated='right' content='Delete' color='red' />
+                                <Button 
+                                    name={activity.id}
+                                    loading={props.submitting && target === activity.id} 
+                                    onClick={(e) => handleActivityDelete(e, activity.id)} 
+                                    floated='right' 
+                                    content='Delete' 
+                                    color='red' />
                                 <Label basic content={activity.category}/>
                             </Item.Extra>
                         </Item.Content>

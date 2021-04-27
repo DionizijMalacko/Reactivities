@@ -10,9 +10,10 @@ namespace Application.Activities
     {
         public class Command : IRequest
         {
-            public Guid Id { get; set; }
+            public Guid Id { get; set; } //sta prosledjujem kao parametar
         }
 
+        //sta radim ili vracam
         public class Handler : IRequestHandler<Command>
         {
             private readonly DataContext _context;

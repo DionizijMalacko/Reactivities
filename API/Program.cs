@@ -14,7 +14,7 @@ namespace API
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static async Task Main(string[] args) //menjamo void na Task
         {
             //brisemo .Run() sa kraja, samo ga Build-ujemo
             var host = CreateHostBuilder(args).Build();
