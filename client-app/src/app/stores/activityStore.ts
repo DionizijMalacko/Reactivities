@@ -1,7 +1,6 @@
 import {makeAutoObservable, runInAction} from "mobx";
 import agent from "../api/agent";
 import { Activity } from "../models/activity";
-import {v4 as uuid} from 'uuid';
 
 
 export default class ActivityStore {
@@ -25,14 +24,12 @@ export default class ActivityStore {
 
     //dodajemo async zbog toga sto kada dobavljamo pomocu get metode takodje je async na backu
     loadActivities = async () => {
+        this.loadingInitial = true; //moramo da ga pozovemo da bi imali konzistentno ukljucivanje spinnera
         //sve sto je sinhrono ide u try catch blok navodno
         try {
             const activities = await agent.Activities.list();
             activities.forEach(activity => {
-                activity.date = activity.date.split('T')[0];
-                //ovo je malo cudno ali tako je, razliciti activities
-                //this.activities.push(activity); //mobX je mutable, pa mozemo da mutiramo objekte direktno ? -> stari nacin ako radimo sa listom
-                this.activityRegistry.set(activity.id, activity); //novi nacin kada radimo sa mapom
+                this.setActivity(activity);
             })
             this.setLoadingInitial(false);
         } catch (error) {
@@ -41,32 +38,47 @@ export default class ActivityStore {
         }
     }
 
+    loadActivity = async (id: string) => {
+        let activity = this.getActivity(id);
+        if(activity) {
+            this.selectedActivity = activity;
+            //ako ne vratimo nista, async vraca Promise<void>, a ako vratimo activity vraca Promis<Activity | undefined>
+            return activity; //mroamo da vracamo activity zbog forme
+        } else {
+            this.loadingInitial = true;
+            try {
+                activity = await agent.Activities.details(id);
+                this.setActivity(activity);
+                runInAction(() => {
+                    this.selectedActivity = activity; //mora u runInAction zbog warninga
+                })
+                this.setLoadingInitial(false);
+                return activity; //isto i ovde
+            } catch (error) {
+                console.log(error);
+                this.setLoadingInitial(false);
+            }
+
+        }
+    }
+    
+    private getActivity = (id: string) => {
+        return this.activityRegistry.get(id);
+    }
+
+    private setActivity = (activity: Activity) => {
+        activity.date = activity.date.split('T')[0];
+        this.activityRegistry.set(activity.id, activity);
+    }
+
     setLoadingInitial = (state: boolean) => {
         this.loadingInitial = state;
     }
 
-    selectActivity = (id: string) => {
-        //this.selectedActivity = this.activities.find(a => a.id === id); -> pomocu liste
-        this.selectedActivity = this.activityRegistry.get(id); // -> pomocu mape
-    }
-
-    cancelSelectedActivity = () => {
-        this.selectedActivity = undefined;
-    }
-
-    //id je optional posto mozemo editovati vec postojecu activity ili kreirati novu
-    openForm = (id?: string) => {
-        id ? this.selectActivity(id) : this.cancelSelectedActivity();
-        this.editMode = true;
-    } 
-
-    closeForm = () => {
-        this.editMode = false;
-    }
 
     createActivity = async (activity: Activity) => {
         this.loading = true;
-        activity.id = uuid();
+        //activity.id = uuid(); brisemo zato sto uuid sada kreiramo kod forme
         try {
             await agent.Activities.create(activity);
             runInAction(() => {
@@ -110,7 +122,6 @@ export default class ActivityStore {
             runInAction(() => {
                 //this.activities = [...this.activities.filter(a => a.id !== id)]; -> lista
                 this.activityRegistry.delete(id);
-                if (this.selectedActivity?.id === id) this.cancelSelectedActivity();
                 this.loading = false;
             })
         } catch(error) {

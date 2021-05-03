@@ -1,18 +1,24 @@
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChangeEvent } from 'react';
+import { Link, useHistory, useParams } from 'react-router-dom';
 import { Button, Form, Segment } from 'semantic-ui-react';
+import LoadingComponent from '../../../app/layout/LoadingComponent';
 import { useStore } from '../../../app/stores/store';
+import {v4 as uuid} from 'uuid';
 
 
 export default observer(function ActivityForm() {
 
+    //jos jedna react hook koji nam sluzi za kao neku redirekciju
+    const history = useHistory();
+
     const {activityStore} = useStore();
+    const {createActivity, updateActivity, loading, loadActivity, loadingInitial} = activityStore;
+    const {id} = useParams<{id: string}>();
 
-    const {selectedActivity, closeForm, createActivity, updateActivity, loading} = activityStore;
-
-    //ako je activiti null onda ce biti sve sto se nalazi na desnoj strani ??
-    const initialState = selectedActivity ?? {
+    //inicijalno stanje forme da bude uvek prazno, brisemo initialState od pre
+    const [activity, setActivity] = useState({
         id: '',
         title: '',
         category: '',
@@ -20,12 +26,30 @@ export default observer(function ActivityForm() {
         date: '',
         city: '',
         venue: ''
-    }
+    });
 
-    const [activity, setActivity] = useState(initialState);
+    //activity se vraca iz funkcije i prosledjujemo ga u setActivity
+    useEffect(() => {
+        if(id) { 
+            loadActivity(id).then(activity => setActivity(activity!))
+        }
+    }, [id, loadActivity]); //kada postavljamo state kao setActivity u ovom slucaju moramo da prosledimo dependencies
+    //ako ne prosledimo, komponenta ce se rerenderovati i useEffect ce se pet izvrsiti i tako u krug
+    //dependency znaci da pazi na njih, ako se desi neka promena on ce to primetiti bez stalnog rerenderovanja
+    //useEffect se izvrsi samo kada se neki od ta dva dependency-ja promeni
 
+
+    //activity.id nam je ili nista ili neki ID, zbog toga poredimo sa 0
     function handleSubmit() {
-        activity.id ? updateActivity(activity) : createActivity(activity);
+        if(activity.id.length === 0) {
+            let newActivity = {
+                ...activity, 
+                id: uuid()
+            }
+            createActivity(newActivity).then(() => history.push(`/activities/${newActivity.id}`)) 
+        } else {
+            updateActivity(activity).then(() => history.push(`/activities/${activity.id}`))
+        }
     }
 
     //ova funkcija nam sluzi da bi react znao da mi kucamo nesto u formi, posto bez nje mozemo da kucamo ali nista se nece prikazati
@@ -35,6 +59,8 @@ export default observer(function ActivityForm() {
         //kopira sva polja od activiti, i nalazi jedno sa kljucem name i postavlja ga na novu vrednost kad se stisne submit
         setActivity({...activity, [name]: value})
     }
+
+    if(loadingInitial) return <LoadingComponent content='Loading activity...' />
 
     //clearing da bi obrisao sve prethodne nzm sta, kada ti naprimer dugmici izadju iz forme, sa time resavas
     return (
@@ -47,7 +73,7 @@ export default observer(function ActivityForm() {
                 <Form.Input placeholder='City' value={activity.city} name='city' onChange={handleInputChange}/>
                 <Form.Input placeholder='Venue' value={activity.venue} name='venue' onChange={handleInputChange}/>
                 <Button loading={loading} floated='right' postive type='submit' content='Submit' color='green'/>
-                <Button  onClick={closeForm} floated='right' type='button' content='Cancel'/>
+                <Button as={Link} to={'/activities'} floated='right' type='button' content='Cancel'/>
             </Form>
         </Segment>
     )

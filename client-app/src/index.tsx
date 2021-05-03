@@ -5,12 +5,15 @@ import './app/layout/styles.css';
 import App from './app/layout/App';
 import reportWebVitals from './reportWebVitals';
 import { store, StoreContext } from './app/stores/store';
+import { BrowserRouter } from 'react-router-dom';
 
 //brisemo React.StrictMode posto ce nam praviti probleme
 //Provide zato sto zelimo da ga cela aplikacija koristi
 ReactDOM.render(
   <StoreContext.Provider value={store}>
+    <BrowserRouter>
         <App />
+    </BrowserRouter>
   </StoreContext.Provider>,
   document.getElementById('root')
 );
