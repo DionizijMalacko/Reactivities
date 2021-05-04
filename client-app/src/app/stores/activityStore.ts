@@ -21,6 +21,19 @@ export default class ActivityStore {
         return Array.from(this.activityRegistry.values()).sort((a, b) => 
             Date.parse(a.date) - Date.parse(b.date));
     }
+    
+    //grupira po datumu
+    //ako je datum isti kreira niz i dodaje tu aktivnost koja ima isti datum
+    //ako nije onda kreira novi niz koji sadrzi samo tu aktivnost
+    get groupedActivities() {
+        return Object.entries(
+            this.activitiesByDate.reduce((activities, activity) => {
+                const date = activity.date;
+                activities[date] = activities[date] ? [...activities[date], activity] : [activity];
+                return activities;
+            }, {} as {[key: string]: Activity[]})
+        ); //kreiramo array objekata koji ima kljuc key tipa string i objekat kao niz activity
+    }
 
     //dodajemo async zbog toga sto kada dobavljamo pomocu get metode takodje je async na backu
     loadActivities = async () => {
