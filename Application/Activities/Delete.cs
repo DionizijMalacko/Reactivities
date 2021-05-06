@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Application.Core;
 using MediatR;
 using Persistence;
 
@@ -8,13 +9,13 @@ namespace Application.Activities
 {
     public class Delete
     {
-        public class Command : IRequest
+        public class Command : IRequest<Result<Unit>>
         {
             public Guid Id { get; set; } //sta prosledjujem kao parametar
         }
 
         //sta radim ili vracam
-        public class Handler : IRequestHandler<Command>
+        public class Handler : IRequestHandler<Command, Result<Unit>>
         {
             private readonly DataContext _context;
             public Handler(DataContext context)
@@ -22,17 +23,23 @@ namespace Application.Activities
                 _context = context;
             }
 
-            public async Task<Unit> Handle(Command request, CancellationToken cancellationToken)
+            public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
                 var activity = await _context.Activities.FindAsync(request.Id);
-                
-                //ovo samo brise iz memorije
+
+                // if(activity == null) {
+                //     return null;
+                // }
+
                 _context.Remove(activity);
 
-                //ovde onda sacuvamo izmene u bazu pa zbog toga ide await
-                await _context.SaveChangesAsync();
+                var result = await _context.SaveChangesAsync() > 0;
 
-                return Unit.Value;
+                if(!result) {
+                    return Result<Unit>.Failure("Failed to delete the activity");
+                }
+
+                return Result<Unit>.Success(Unit.Value);
             }
         }
     }

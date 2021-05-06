@@ -7,6 +7,7 @@ namespace Domain
         //Guid izgenerise id sa serverske ili klijentske strane
         public Guid Id { get; set; }
 
+        //[Required]
         public string Title { get; set; }
 
         public DateTime Date { get; set; }
