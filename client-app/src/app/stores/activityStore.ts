@@ -1,6 +1,7 @@
 import {makeAutoObservable, runInAction} from "mobx";
 import agent from "../api/agent";
 import { Activity } from "../models/activity";
+import {format} from 'date-fns';
 
 
 export default class ActivityStore {
@@ -9,7 +10,7 @@ export default class ActivityStore {
     selectedActivity: Activity | undefined = undefined;
     editMode = false;
     loading = false;
-    loadingInitial = true;
+    loadingInitial = false;
 
     //bound da bi automatski bindovao taj properti sa tom klasom (action.bound)
     //ili ako koristimo arrow function kod setera ne moramo da definisemo .bound posto on automatski to odradi
@@ -19,7 +20,7 @@ export default class ActivityStore {
 
     get activitiesByDate() {
         return Array.from(this.activityRegistry.values()).sort((a, b) => 
-            Date.parse(a.date) - Date.parse(b.date));
+            a.date!.getTime() - b.date!.getTime());
     }
     
     //grupira po datumu
@@ -28,7 +29,7 @@ export default class ActivityStore {
     get groupedActivities() {
         return Object.entries(
             this.activitiesByDate.reduce((activities, activity) => {
-                const date = activity.date;
+                const date = format(activity.date!, 'dd MMM yyyy');
                 activities[date] = activities[date] ? [...activities[date], activity] : [activity];
                 return activities;
             }, {} as {[key: string]: Activity[]})
@@ -80,7 +81,7 @@ export default class ActivityStore {
     }
 
     private setActivity = (activity: Activity) => {
-        activity.date = activity.date.split('T')[0];
+        activity.date = new Date(activity.date!);
         this.activityRegistry.set(activity.id, activity);
     }
 
