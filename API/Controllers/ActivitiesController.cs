@@ -11,6 +11,7 @@ using Persistence;
 namespace API.Controllers
 {
     //pocetna ruta je /api/activities zato sto BaseApiController nasledjuje ControllerBase koji to definise
+    [AllowAnonymous]
     public class ActivitiesController : BaseApiController
     {
 

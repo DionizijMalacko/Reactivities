@@ -18,7 +18,7 @@ export default observer(function ActivityDashboard() {
     }, [activityRegistry.size, loadActivities]); // <= 1 zato sto ako je === 0  onda ucita samo jednu activity kod renderovanja
 
 
-    if (activityStore.loadingInitial) return <LoadingComponent content='Loading app...'/> 
+    if (activityStore.loadingInitial) return <LoadingComponent content='Loading activities...'/> 
 
     return (
         <Grid>
