@@ -1,9 +1,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Core;
+using Application.Interfaces;
 using Domain;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Persistence;
 
 namespace Application.Activities
@@ -31,8 +33,10 @@ namespace Application.Activities
         public class Handler : IRequestHandler<Command, Result<Unit>>
         {
             private readonly DataContext _context;
-            public Handler(DataContext context)
+            private readonly IUserAccessor _userAccessor;
+            public Handler(DataContext context, IUserAccessor userAccessor)
             {
+                _userAccessor = userAccessor;
                 _context = context;
             }
 
@@ -40,13 +44,23 @@ namespace Application.Activities
             //Task<Unit> ne vraca nista ali govori da je ova akcija zavrsena
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
-                //nije AddAsync posto se ta metoda koristi samo za cuvanje u bazu, a mi ovde ne cuvamo jos
-                _context.Activities.Add(request.Activity);
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+
+                var attendee = new ActivityAttendee {
+                    AppUser = user,
+                    Activity = request.Activity,
+                    IsHost = true
+                };
+
+                request.Activity.Attendees.Add(attendee);
                 
-                //ovde sada cuvamo u bazu pa zato ide await
+                //odavde cuvamo novu activity u activities tabeli, a gore smo napravili vezu sa user-om
+                _context.Activities.Add(request.Activity);
+
                 var result = await _context.SaveChangesAsync() > 0; //saveChanges vvraca integer
 
-                if(!result) {
+                if (!result)
+                {
                     return Result<Unit>.Failure("Failed to create activity");
                 }
 
