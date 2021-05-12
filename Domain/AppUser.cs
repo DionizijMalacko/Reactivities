@@ -9,6 +9,10 @@ namespace Domain
         public string DisplayName { get; set; }
         public string Bio { get; set; }
 
+        //ovo je za manyToMany relationship
         public ICollection<ActivityAttendee> Activities {get; set;}
+
+        //ovo je za oneToMany
+        public ICollection<Photo> Photos {get; set;}
     }
 }
