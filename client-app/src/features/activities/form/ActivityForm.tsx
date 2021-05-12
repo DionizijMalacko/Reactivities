@@ -11,28 +11,18 @@ import MyTextArea from '../../../app/common/form/MyTextArea';
 import MySelectInput from '../../../app/common/form/MySelectInput';
 import { categoryOptions } from '../../../app/common/options/categoryOptions';
 import MyDateInput from '../../../app/common/form/MyDateInput';
-import { Activity } from '../../../app/models/activity';
+import { ActivityFormValues } from '../../../app/models/activity';
 import { v4 as uuid} from 'uuid';
 
 export default observer(function ActivityForm() {
 
-    //jos jedna react hook koji nam sluzi za kao neku redirekciju
     const history = useHistory();
 
     const {activityStore} = useStore();
-    const {loading, createActivity, updateActivity, loadActivity, loadingInitial} = activityStore;
+    const {createActivity, updateActivity, loadActivity, loadingInitial} = activityStore;
     const {id} = useParams<{id: string}>();
 
-    //inicijalno stanje forme da bude uvek prazno, brisemo initialState od pre
-    const [activity, setActivity] = useState<Activity>({
-        id: '',
-        title: '',
-        category: '',
-        description: '',
-        date: null,
-        city: '',
-        venue: ''
-    });
+    const [activity, setActivity] = useState<ActivityFormValues>(new ActivityFormValues());
 
     const validationSchema = Yup.object({
         title: Yup.string().required('The activity title is required!'),
@@ -46,7 +36,7 @@ export default observer(function ActivityForm() {
     //activity se vraca iz funkcije i prosledjujemo ga u setActivity
     useEffect(() => {
         if(id) { 
-            loadActivity(id).then(activity => setActivity(activity!))
+            loadActivity(id).then(activity => setActivity(new ActivityFormValues(activity)))
         }
     }, [id, loadActivity]); //kada postavljamo state kao setActivity u ovom slucaju moramo da prosledimo dependencies
     //ako ne prosledimo, komponenta ce se rerenderovati i useEffect ce se pet izvrsiti i tako u krug
@@ -55,8 +45,8 @@ export default observer(function ActivityForm() {
 
 
     //activity.id nam je ili nista ili neki ID, zbog toga poredimo sa 0
-    function handleFormSubmit(activity: Activity) {
-        if(activity.id.length === 0) {
+    function handleFormSubmit(activity: ActivityFormValues) {
+        if(!activity.id) {
             let newActivity = {
                 ...activity, 
                 id: uuid()
@@ -96,7 +86,7 @@ export default observer(function ActivityForm() {
                         <MyTextInput placeholder='Venue' name='venue' />
                         <Button 
                             disabled={isSubmitting || !dirty || !isValid}
-                            loading={loading} floated='right' 
+                            loading={isSubmitting} floated='right' 
                             type='submit' content='Submit' color='green'/>
                         <Button as={Link} to={'/activities'} floated='right' type='button' content='Cancel'/>
                     </Form>
