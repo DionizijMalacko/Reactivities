@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Core;
@@ -10,7 +9,6 @@ using Persistence;
 
 namespace Application.Profiles
 {
-    //handler
     public class Details
     {
         public class Query : IRequest<Result<Profile>>
@@ -27,18 +25,17 @@ namespace Application.Profiles
                 _mapper = mapper;
                 _context = context;
             }
-            
-            //FirstOrDefault ili Single or default skoro su isti, samo kod single pazi da unique
+
             public async Task<Result<Profile>> Handle(Query request, CancellationToken cancellationToken)
             {
                 var user = await _context.Users
                     .ProjectTo<Profile>(_mapper.ConfigurationProvider)
                     .SingleOrDefaultAsync(x => x.Username == request.Username);
 
-                if(user == null) return null;
-                
+                if (user == null) return null;
+
                 return Result<Profile>.Success(user);
             }
         }
     }
-}
+} 

@@ -15,8 +15,7 @@ namespace Application.Photos
     {
         public class Command : IRequest<Result<Photo>>
         {
-            //parametri
-            public IFormFile File { get; set; } //mora biti File ime
+            public IFormFile File { get; set; }
         }
 
         public class Handler : IRequestHandler<Command, Result<Photo>>
@@ -36,25 +35,26 @@ namespace Application.Photos
                 var user = await _context.Users.Include(p => p.Photos)
                     .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
 
-                if(user == null) return null;
+                if (user == null) return null;
 
                 var photoUploadResult = await _photoAccessor.AddPhoto(request.File);
 
-                var photo = new Photo {
+                var photo = new Photo
+                {
                     Url = photoUploadResult.Url,
                     Id = photoUploadResult.PublicId
                 };
 
-                if(!user.Photos.Any(x => x.IsMain)) photo.IsMain = true;
+                if (!user.Photos.Any(x => x.IsMain)) photo.IsMain = true;
 
                 user.Photos.Add(photo);
 
                 var result = await _context.SaveChangesAsync() > 0;
 
-                if(result) return Result<Photo>.Success(photo);
+                if (result) return Result<Photo>.Success(photo);
 
                 return Result<Photo>.Failure("Problem adding photo");
             }
         }
     }
-}
+} 
