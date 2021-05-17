@@ -12,6 +12,8 @@ namespace Application.Core
             //Mapiramo Activity u Activity
             CreateMap<Activity, Activity>(); 
 
+            //u d.hostUserName kopiramo nadjen rezultat
+            //prvi parametar u sta kopiramo a drugi odakle
             CreateMap<Activity, ActivityDTO>()
                 .ForMember(d => d.HostUsername, o => o.MapFrom(s => s.Attendees
                     .FirstOrDefault(x => x.IsHost).AppUser.UserName));
